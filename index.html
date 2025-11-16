@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Acme Product Importer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #111827;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59,130,246,0.15);
+      --accent-danger: #ef4444;
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --border: #1f2933;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left,#1d283a,#020617);
+      color: var(--text);
+    }
+
+    .app-container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      color: var(--text-soft);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+      overflow-x: auto;
+    }
+    .tab {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      background: transparent;
+      color: var(--text-soft);
+      transition: all 0.15s ease;
+    }
+    .tab.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .tab:hover:not(.active) {
+      background: rgba(148,163,184,0.1);
+    }
+
+    .card {
+      background: linear-gradient(145deg,#020617,#020617 40%,#020617);
+      border: 1px solid rgba(148,163,184,0.15);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .section-title h2 {
+      font-size: 1.2rem;
+      margin: 0;
+    }
+    .section-title small {
+      color: var(--text-soft);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 150px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="url"],
+    select,
+    input[type="file"] {
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #020617;
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(59,130,246,0.4);
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent);
+      color: white;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.5);
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(37,99,235,0.6);
+      background: #2563eb;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-soft);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(148,163,184,0.08);
+    }
+
+    .btn-danger {
+      background: var(--accent-danger);
+      box-shadow: 0 4px 14px rgba(248,113,113,0.5);
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: #dc2626;
+    }
+
+    .progress-container {
+      margin-top: 10px;
+    }
+    .progress-bar {
+      height: 8px;
+      width: 100%;
+      border-radius: 999px;
+      background: #020617;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .progress-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg,#22c55e,#16a34a);
+      transition: width 0.2s ease;
+    }
+    .status-text {
+      font-size: 0.8rem;
+      margin-top: 6px;
+      color: var(--text-soft);
+    }
+    .status-text.error {
+      color: #fca5a5;
+    }
+    .status-text.success {
+      color: #4ade80;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-top: 8px;
+    }
+    th, td {
+      border-bottom: 1px solid rgba(31,41,55,0.7);
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th {
+      color: var(--text-soft);
+      font-weight: 500;
+      background: #020617;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tr:nth-child(even) td {
+      background: rgba(15,23,42,0.8);
+    }
+    tr:hover td {
+      background: rgba(30,64,175,0.35);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: rgba(34,197,94,0.2);
+      color: #bbf7d0;
+    }
+    .badge.inactive {
+      background: rgba(248,113,113,0.2);
+      color: #fecaca;
+    }
+
+    .pill {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(148,163,184,0.2);
+      font-size: 0.7rem;
+      color: var(--text-soft);
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 768px) {
+      .row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <h1>Acme Product Importer</h1>
+  <div class="subtitle">CSV import, product management, and webhook configuration demo (FastAPI + Celery).</div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="upload">CSV Upload</button>
+    <button class="tab" data-tab="products">Products</button>
+    <button class="tab" data-tab="webhooks">Webhooks</button>
+  </div>
+
+  <!-- Upload Section -->
+  <section id="tab-upload" class="card">
+    <div class="section-title">
+      <h2>CSV Upload & Progress</h2>
+      <small>Max ~500k rows. SKU is case-insensitive unique.</small>
+    </div>
+
+    <div class="row">
+      <div class="field" style="flex:2">
+        <label for="csvFile">CSV File</label>
+        <input type="file" id="csvFile" accept=".csv" />
+        <small class="status-text" id="uploadHelp">
+          Expected columns: <code>sku</code>, <code>name</code>, <code>description</code>, <code>price</code>
+        </small>
+      </div>
+      <div class="field" style="align-self:flex-end;">
+        <button id="btnUpload">
+          ⬆️ Upload & Start Import
+        </button>
+      </div>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-bar-inner" id="uploadProgress"></div>
+      </div>
+      <div class="status-text" id="uploadStatus"></div>
+    </div>
+  </section>
+
+  <!-- Products Section -->
+  <section id="tab-products" class="card hidden">
+    <div class="section-title">
+      <h2>Products</h2>
+      <small>Filter, paginate, create, update, delete & bulk delete.</small>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Filter by SKU</label>
+        <input type="text" id="filterSku" placeholder="Exact SKU" />
+      </div>
+      <div class="field">
+        <label>Filter by Name</label>
+        <input type="text" id="filterName" placeholder="Contains..." />
+      </div>
+      <div class="field">
+        <label>Filter by Description</label>
+        <input type="text" id="filterDesc" placeholder="Contains..." />
+      </div>
+      <div class="field">
+        <label>Active</label>
+        <select id="filterActive">
+          <option value="">Any</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Page size</label>
+        <input type="number" id="pageSize" value="20" min="5" max="200" />
+      </div>
+      <div class="field" style="align-self:flex-end;">
+        <button class="btn-secondary" id="btnApplyFilters">🔍 Apply Filters</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Create / Edit Product</label>
+        <div class="row">
+          <input type="hidden" id="productId" />
+          <input style="min-width:90px" type="text" id="productSku" placeholder="SKU *" />
+          <input style="min-width:120px" type="text" id="productName" placeholder="Name *" />
+          <input style="min-width:160px" type="text" id="productDesc" placeholder="Description" />
+          <input style="min-width:80px" type="number" id="productPrice" placeholder="Price" step="0.01" />
+          <select id="productActive">
+            <option value="true" selected>Active</option>
+            <option value="false">Inactive</option>
+          </select>
+          <button id="btnSaveProduct">💾 Save</button>
+          <button class="btn-secondary" id="btnResetProduct">↺ Reset form</button>
+        </div>
+        <small class="status-text" id="productFormStatus"></small>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <span class="pill" id="productListInfo">Products</span>
+      <button class="btn-danger" id="btnBulkDelete">🗑️ Delete ALL products</button>
+    </div>
+
+    <div style="max-height:320px;overflow:auto;border-radius:12px;border:1px solid rgba(148,163,184,0.3);">
+      <table>
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>SKU</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Price</th>
+          <th>Active</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="productTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <div>
+        <button class="btn-secondary" id="btnPrevPage">◀ Prev</button>
+        <button class="btn-secondary" id="btnNextPage">Next ▶</button>
+      </div>
+      <span id="pageInfo">Page 1</span>
+    </div>
+  </section>
+
+  <!-- Webhooks Section -->
+  <section id="tab-webhooks" class="card hidden">
+    <div class="section-title">
+      <h2>Webhooks</h2>
+      <small>Configure, enable/disable, test & see last response.</small>
+    </div>
+
+    <div class="row">
+      <div class="field" style="flex:2">
+        <label>Webhook URL</label>
+        <input type="url" id="whUrl" placeholder="https://example.com/hook" />
+      </div>
+      <div class="field">
+        <label>Event</label>
+        <select id="whEvent">
+          <option value="product_created">product_created</option>
+          <option value="product_updated">product_updated</option>
+          <option value="product_deleted">product_deleted</option>
+          <option value="import_completed">import_completed</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Enabled</label>
+        <select id="whEnabled">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <div class="field" style="align-self:flex-end;">
+        <button id="btnSaveWebhook">💾 Save Webhook</button>
+        <button class="btn-secondary" id="btnResetWebhook">↺ Reset</button>
+        <input type="hidden" id="whId" />
+      </div>
+    </div>
+
+    <div style="max-height:320px;overflow:auto;border-radius:12px;border:1px solid rgba(148,163,184,0.3);margin-top:8px;">
+      <table>
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>URL</th>
+          <th>Event</th>
+          <th>Enabled</th>
+          <th>Last Status</th>
+          <th>Last Time (ms)</th>
+          <th>Error</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="webhookTableBody"></tbody>
+      </table>
+    </div>
+    <small class="status-text" id="webhookStatus"></small>
+  </section>
+</div>
+
+<script>
+  const API_BASE = "http://127.0.0.1:8000/api";
+
+  // ---- Tabs ----
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      const target = tab.dataset.tab;
+      document.querySelectorAll("section[id^='tab-']").forEach(sec => {
+        sec.classList.add("hidden");
+      });
+      document.getElementById("tab-" + target).classList.remove("hidden");
+    });
+  });
+
+  // ---- Upload logic ----
+  const uploadBtn = document.getElementById("btnUpload");
+  const uploadStatus = document.getElementById("uploadStatus");
+  const uploadProgress = document.getElementById("uploadProgress");
+
+  let currentJobId = null;
+  let pollInterval = null;
+
+  uploadBtn.addEventListener("click", async () => {
+    const fileInput = document.getElementById("csvFile");
+    const file = fileInput.files[0];
+
+    uploadStatus.className = "status-text";
+    uploadStatus.textContent = "";
+
+    if (!file) {
+      uploadStatus.classList.add("error");
+      uploadStatus.textContent = "Please choose a CSV file.";
+      return;
+    }
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      uploadStatus.classList.add("error");
+      uploadStatus.textContent = "Only .csv files are allowed.";
+      return;
+    }
+
+    uploadBtn.disabled = true;
+    uploadStatus.textContent = "Uploading file and starting import...";
+    uploadProgress.style.width = "0%";
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`${API_BASE}/imports/upload`, {
+        method: "POST",
+        body: formData
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Upload failed (${res.status}): ${txt}`);
+      }
+
+      const job = await res.json();
+      currentJobId = job.id;
+      uploadStatus.textContent = `Import job created (ID: ${job.id}). Parsing...`;
+      uploadProgress.style.width = "5%";
+
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(pollJobStatus, 1000);
+    } catch (err) {
+      console.error(err);
+      uploadStatus.classList.add("error");
+      uploadStatus.textContent = `Error: ${err.message}`;
+      uploadBtn.disabled = false;
+    }
+  });
+
+  async function pollJobStatus() {
+    if (!currentJobId) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/imports/${currentJobId}`);
+      if (!res.ok) {
+        throw new Error(`Status error: ${res.status}`);
+      }
+      const job = await res.json();
+
+      let message = `Status: ${job.status}`;
+      let percent = 10;
+
+      if (job.total_rows) {
+        const processed = job.processed_rows || 0;
+        percent = Math.min(100, Math.round((processed / job.total_rows) * 100));
+        message += ` | ${processed}/${job.total_rows} rows`;
+      }
+
+      if (job.status === "completed") {
+        percent = 100;
+        message = `✅ Import complete. Processed ${job.processed_rows || 0} rows.`;
+        uploadStatus.className = "status-text success";
+        clearInterval(pollInterval);
+        uploadBtn.disabled = false;
+        // refresh product list automatically
+        loadProducts();
+      } else if (job.status === "failed") {
+        percent = 100;
+        message = `❌ Import failed: ${job.error_message || "Unknown error"}`;
+        uploadStatus.className = "status-text error";
+        clearInterval(pollInterval);
+        uploadBtn.disabled = false;
+      }
+
+      uploadStatus.textContent = message;
+      uploadProgress.style.width = `${percent}%`;
+    } catch (err) {
+      console.error(err);
+      uploadStatus.className = "status-text error";
+      uploadStatus.textContent = `Error polling job: ${err.message}`;
+      clearInterval(pollInterval);
+      uploadBtn.disabled = false;
+    }
+  }
+
+  // ---- Products logic ----
+  let currentPage = 1;
+  let isLastPage = false;
+
+  const pageSizeInput = document.getElementById("pageSize");
+  const pageInfo = document.getElementById("pageInfo");
+  const productTableBody = document.getElementById("productTableBody");
+  const productListInfo = document.getElementById("productListInfo");
+  const productFormStatus = document.getElementById("productFormStatus");
+
+  document.getElementById("btnApplyFilters").addEventListener("click", () => {
+    currentPage = 1;
+    loadProducts();
+  });
+
+  document.getElementById("btnPrevPage").addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadProducts();
+    }
+  });
+
+  document.getElementById("btnNextPage").addEventListener("click", () => {
+    if (!isLastPage) {
+      currentPage++;
+      loadProducts();
+    }
+  });
+
+  async function loadProducts() {
+    const limit = Math.max(5, Math.min(200, parseInt(pageSizeInput.value || "20", 10)));
+    const skip = (currentPage - 1) * limit;
+
+    const sku = document.getElementById("filterSku").value.trim();
+    const name = document.getElementById("filterName").value.trim();
+    const desc = document.getElementById("filterDesc").value.trim();
+    const activeVal = document.getElementById("filterActive").value;
+
+    const params = new URLSearchParams({ skip, limit });
+    if (sku) params.append("sku", sku);
+    if (name) params.append("name", name);
+    if (desc) params.append("description", desc);
+    if (activeVal === "true" || activeVal === "false") {
+      params.append("active", activeVal);
+    }
+
+    productFormStatus.textContent = "Loading products...";
+    productFormStatus.className = "status-text";
+
+    try {
+      const res = await fetch(`${API_BASE}/products?${params.toString()}`);
+      if (!res.ok) throw new Error(`Failed to load products (${res.status})`);
+      const products = await res.json();
+
+      productTableBody.innerHTML = "";
+
+      if (!Array.isArray(products) || products.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 7;
+        td.textContent = "No products found.";
+        td.style.textAlign = "center";
+        td.style.color = "#9ca3af";
+        tr.appendChild(td);
+        productTableBody.appendChild(tr);
+        isLastPage = true;
+      } else {
+        products.forEach(p => {
+          const tr = document.createElement("tr");
+
+          const tdId = document.createElement("td");
+          tdId.textContent = p.id;
+          tr.appendChild(tdId);
+
+          const tdSku = document.createElement("td");
+          tdSku.textContent = p.sku;
+          tr.appendChild(tdSku);
+
+          const tdName = document.createElement("td");
+          tdName.textContent = p.name;
+          tr.appendChild(tdName);
+
+          const tdDesc = document.createElement("td");
+          tdDesc.textContent = p.description || "";
+          tr.appendChild(tdDesc);
+
+          const tdPrice = document.createElement("td");
+          tdPrice.textContent = p.price != null ? p.price : "";
+          tr.appendChild(tdPrice);
+
+          const tdActive = document.createElement("td");
+          const badge = document.createElement("span");
+          badge.className = "badge" + (p.active ? "" : " inactive");
+          badge.textContent = p.active ? "Active" : "Inactive";
+          tdActive.appendChild(badge);
+          tr.appendChild(tdActive);
+
+          const tdActions = document.createElement("td");
+          const editBtn = document.createElement("button");
+          editBtn.className = "btn-secondary";
+          editBtn.textContent = "Edit";
+          editBtn.addEventListener("click", () => {
+            fillProductForm(p);
+          });
+          const delBtn = document.createElement("button");
+          delBtn.className = "btn-secondary";
+          delBtn.style.marginLeft = "4px";
+          delBtn.textContent = "Delete";
+          delBtn.addEventListener("click", () => {
+            deleteProduct(p.id);
+          });
+
+          tdActions.appendChild(editBtn);
+          tdActions.appendChild(delBtn);
+          tr.appendChild(tdActions);
+
+          productTableBody.appendChild(tr);
+        });
+
+        isLastPage = products.length < limit;
+      }
+
+      pageInfo.textContent = `Page ${currentPage}` + (isLastPage ? " (last)" : "");
+      productListInfo.textContent = `Products – showing up to ${limit} per page`;
+      productFormStatus.textContent = "";
+    } catch (err) {
+      console.error(err);
+      productFormStatus.className = "status-text error";
+      productFormStatus.textContent = `Error loading products: ${err.message}`;
+    }
+  }
+
+  function fillProductForm(p) {
+    document.getElementById("productId").value = p.id;
+    document.getElementById("productSku").value = p.sku;
+    document.getElementById("productName").value = p.name;
+    document.getElementById("productDesc").value = p.description || "";
+    document.getElementById("productPrice").value = p.price != null ? p.price : "";
+    document.getElementById("productActive").value = p.active ? "true" : "false";
+    productFormStatus.className = "status-text";
+    productFormStatus.textContent = `Editing product ID ${p.id}`;
+  }
+
+  function resetProductForm() {
+    document.getElementById("productId").value = "";
+    document.getElementById("productSku").value = "";
+    document.getElementById("productName").value = "";
+    document.getElementById("productDesc").value = "";
+    document.getElementById("productPrice").value = "";
+    document.getElementById("productActive").value = "true";
+    productFormStatus.className = "status-text";
+    productFormStatus.textContent = "Form cleared.";
+  }
+
+  document.getElementById("btnResetProduct").addEventListener("click", resetProductForm);
+
+  document.getElementById("btnSaveProduct").addEventListener("click", async () => {
+    const id = document.getElementById("productId").value;
+    const sku = document.getElementById("productSku").value.trim();
+    const name = document.getElementById("productName").value.trim();
+    const desc = document.getElementById("productDesc").value.trim();
+    const priceStr = document.getElementById("productPrice").value.trim();
+    const active = document.getElementById("productActive").value === "true";
+
+    productFormStatus.className = "status-text";
+    productFormStatus.textContent = "";
+
+    if (!sku || !name) {
+      productFormStatus.classList.add("error");
+      productFormStatus.textContent = "SKU and Name are required.";
+      return;
+    }
+
+    const payload = {
+      sku,
+      name,
+      description: desc || null,
+      price: priceStr ? parseFloat(priceStr) : null,
+      active
+    };
+
+    try {
+      let res;
+      if (id) {
+        // update
+        res = await fetch(`${API_BASE}/products/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        // create
+        res = await fetch(`${API_BASE}/products`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Save failed (${res.status}): ${txt}`);
+      }
+
+      const saved = await res.json();
+      productFormStatus.className = "status-text success";
+      productFormStatus.textContent = `Saved product ID ${saved.id}.`;
+      resetProductForm();
+      loadProducts();
+    } catch (err) {
+      console.error(err);
+      productFormStatus.className = "status-text error";
+      productFormStatus.textContent = `Error saving product: ${err.message}`;
+    }
+  });
+
+  async function deleteProduct(id) {
+    if (!confirm(`Delete product ID ${id}?`)) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${id}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+      loadProducts();
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting product: " + err.message);
+    }
+  }
+
+  document.getElementById("btnBulkDelete").addEventListener("click", async () => {
+    if (!confirm("Are you sure? This will delete ALL products and cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/products/bulk/all`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error(`Bulk delete failed (${res.status})`);
+      const data = await res.json();
+      alert(data.detail || "Bulk delete completed.");
+      currentPage = 1;
+      loadProducts();
+    } catch (err) {
+      console.error(err);
+      alert("Error bulk deleting products: " + err.message);
+    }
+  });
+
+  // ---- Webhooks logic ----
+  const webhookTableBody = document.getElementById("webhookTableBody");
+  const webhookStatus = document.getElementById("webhookStatus");
+
+  async function loadWebhooks() {
+    webhookStatus.className = "status-text";
+    webhookStatus.textContent = "Loading webhooks...";
+    try {
+      const res = await fetch(`${API_BASE}/webhooks`);
+      if (!res.ok) throw new Error(`Failed to load webhooks (${res.status})`);
+      const hooks = await res.json();
+
+      webhookTableBody.innerHTML = "";
+      if (!Array.isArray(hooks) || hooks.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 8;
+        td.textContent = "No webhooks configured.";
+        td.style.textAlign = "center";
+        td.style.color = "#9ca3af";
+        tr.appendChild(td);
+        webhookTableBody.appendChild(tr);
+      } else {
+        hooks.forEach(h => {
+          const tr = document.createElement("tr");
+
+          const tdId = document.createElement("td");
+          tdId.textContent = h.id;
+          tr.appendChild(tdId);
+
+          const tdUrl = document.createElement("td");
+          tdUrl.textContent = h.url;
+          tr.appendChild(tdUrl);
+
+          const tdEvent = document.createElement("td");
+          tdEvent.textContent = h.event;
+          tr.appendChild(tdEvent);
+
+          const tdEnabled = document.createElement("td");
+          const badge = document.createElement("span");
+          badge.className = "badge" + (h.enabled ? "" : " inactive");
+          badge.textContent = h.enabled ? "Enabled" : "Disabled";
+          tdEnabled.appendChild(badge);
+          tr.appendChild(tdEnabled);
+
+          const tdStatus = document.createElement("td");
+          tdStatus.textContent = h.last_status_code ?? "";
+          tr.appendChild(tdStatus);
+
+          const tdTime = document.createElement("td");
+          tdTime.textContent = h.last_response_time_ms ?? "";
+          tr.appendChild(tdTime);
+
+          const tdErr = document.createElement("td");
+          tdErr.textContent = h.last_error ?? "";
+          tr.appendChild(tdErr);
+
+          const tdActions = document.createElement("td");
+          const editBtn = document.createElement("button");
+          editBtn.className = "btn-secondary";
+          editBtn.textContent = "Edit";
+          editBtn.addEventListener("click", () => fillWebhookForm(h));
+          const delBtn = document.createElement("button");
+          delBtn.className = "btn-secondary";
+          delBtn.style.marginLeft = "4px";
+          delBtn.textContent = "Delete";
+          delBtn.addEventListener("click", () => deleteWebhook(h.id));
+          const testBtn = document.createElement("button");
+          testBtn.className = "btn-secondary";
+          testBtn.style.marginLeft = "4px";
+          testBtn.textContent = "Test";
+          testBtn.addEventListener("click", () => testWebhook(h.id));
+
+          tdActions.appendChild(editBtn);
+          tdActions.appendChild(delBtn);
+          tdActions.appendChild(testBtn);
+          tr.appendChild(tdActions);
+
+          webhookTableBody.appendChild(tr);
+        });
+      }
+      webhookStatus.textContent = "";
+    } catch (err) {
+      console.error(err);
+      webhookStatus.className = "status-text error";
+      webhookStatus.textContent = `Error loading webhooks: ${err.message}`;
+    }
+  }
+
+  function fillWebhookForm(h) {
+    document.getElementById("whId").value = h.id;
+    document.getElementById("whUrl").value = h.url;
+    document.getElementById("whEvent").value = h.event;
+    document.getElementById("whEnabled").value = h.enabled ? "true" : "false";
+    webhookStatus.className = "status-text";
+    webhookStatus.textContent = `Editing webhook ID ${h.id}`;
+  }
+
+  function resetWebhookForm() {
+    document.getElementById("whId").value = "";
+    document.getElementById("whUrl").value = "";
+    document.getElementById("whEvent").value = "product_created";
+    document.getElementById("whEnabled").value = "true";
+    webhookStatus.className = "status-text";
+    webhookStatus.textContent = "Form cleared.";
+  }
+
+  document.getElementById("btnResetWebhook").addEventListener("click", resetWebhookForm);
+
+  document.getElementById("btnSaveWebhook").addEventListener("click", async () => {
+    const id = document.getElementById("whId").value;
+    const url = document.getElementById("whUrl").value.trim();
+    const event = document.getElementById("whEvent").value;
+    const enabled = document.getElementById("whEnabled").value === "true";
+
+    webhookStatus.className = "status-text";
+    webhookStatus.textContent = "";
+
+    if (!url) {
+      webhookStatus.classList.add("error");
+      webhookStatus.textContent = "Webhook URL is required.";
+      return;
+    }
+
+    const payload = { url, event, enabled };
+
+    try {
+      let res;
+      if (id) {
+        res = await fetch(`${API_BASE}/webhooks/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(`${API_BASE}/webhooks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Save failed (${res.status}): ${txt}`);
+      }
+
+      webhookStatus.className = "status-text success";
+      webhookStatus.textContent = "Webhook saved.";
+      resetWebhookForm();
+      loadWebhooks();
+    } catch (err) {
+      console.error(err);
+      webhookStatus.className = "status-text error";
+      webhookStatus.textContent = `Error saving webhook: ${err.message}`;
+    }
+  });
+
+  async function deleteWebhook(id) {
+    if (!confirm(`Delete webhook ID ${id}?`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/webhooks/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`Delete failed (${res.status})`);
+      loadWebhooks();
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting webhook: " + err.message);
+    }
+  }
+
+  async function testWebhook(id) {
+    webhookStatus.className = "status-text";
+    webhookStatus.textContent = `Triggering test for webhook ID ${id}...`;
+    try {
+      const res = await fetch(`${API_BASE}/webhooks/${id}/test`, { method: "POST" });
+      if (!res.ok) throw new Error(`Test failed (${res.status})`);
+      webhookStatus.className = "status-text success";
+      webhookStatus.textContent = "Test trigger sent. Refreshing list to see latest status...";
+      setTimeout(loadWebhooks, 1500);
+    } catch (err) {
+      console.error(err);
+      webhookStatus.className = "status-text error";
+      webhookStatus.textContent = `Error testing webhook: ${err.message}`;
+    }
+  }
+
+  // Initial data
+  loadProducts();
+  loadWebhooks();
+</script>
+</body>
+</html>
